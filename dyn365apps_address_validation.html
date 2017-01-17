@@ -1,0 +1,155 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>dyn365apps - Address Validation</title>
+    <link href="/WebResources/dyn365apps_autocomplete_style.css" rel="stylesheet">
+    <script src="/WebResources/dyn365apps_jquery1.9.1.js"></script>
+    <script src="/WebResources/dyn365apps_jquery_autocomplete_all.js"></script>
+    <script>
+        function getRequestKey() {
+            var RequestKey = "RK-33333-33333-44444-55555-55555-44444-33333-33333";
+            return RequestKey;
+        }
+
+        dyn365appsAddressMethods = new Object();
+        dyn365appsAddressMethods.LoadAddressOnForm = function () {
+            var address = "--";
+            if (parent.Xrm.Page.getAttribute("address1_line1").getValue() != null) {
+                address = parent.Xrm.Page.getAttribute("address1_line1").getValue();
+            }
+            if (parent.Xrm.Page.getAttribute("address1_city").getValue() != null) {
+                address += ", " + parent.Xrm.Page.getAttribute("address1_city").getValue();
+            }
+            if (parent.Xrm.Page.getAttribute("address1_stateorprovince").getValue() != null) {
+                address += ", " + parent.Xrm.Page.getAttribute("address1_stateorprovince").getValue();
+            }
+            if (parent.Xrm.Page.getAttribute("address1_postalcode").getValue() != null) {
+                address += ", " + parent.Xrm.Page.getAttribute("address1_postalcode").getValue();
+            }
+            if (parent.Xrm.Page.getAttribute("address1_country").getValue() != null) {
+                address += ", " + parent.Xrm.Page.getAttribute("address1_country").getValue();
+            }
+
+            $('#addline').val(address);
+        };
+
+        $(document).ready(function (e) {
+            dyn365appsAddressMethods.LoadAddressOnForm();
+
+            // Stop form submission on enter key press
+            $(window).keydown(function (event) {
+                if (event.keyCode == 13) {
+                    event.preventDefault();
+                    return false;
+                }
+            });
+
+        });
+
+
+        $(function () {
+            var TempKey = getRequestKey();
+            $('#addline').autocomplete(
+            {
+
+                source: function (request, response) {
+
+                    $.ajax(
+                    {
+                        url: "https://kleber.datatoolscloud.net.au/KleberWebService/DtKleberService.svc/ProcessQueryStringRequest",
+                        dataType: "jsonp",
+                        type: "GET",
+                        contentType: "application/json; charset=utf-8",
+                        data: { OutputFormat: "json", ResultLimit: 4, AddressLine: request.term, Method: "DataTools.Capture.Address.Predictive.AuPaf.SearchAddress", RequestKey: TempKey },
+                        success: function (data) {
+                            $('#dpid').val("");
+                            response($.map(data.DtResponse.Result, function (item) {
+
+                                var Output = (item.AddressLine + ", " + item.Locality + ", " + item.State + ", " + item.Postcode);
+                                return { label: Output, value: Output, Output: Output, RecordId: item.RecordId, AddressLine: item.AddressLine };
+                            }));
+                        }
+                    });
+                },
+
+                select: function (event, ui) {
+                    $.ajax(
+                    {
+                        url: "https://kleber.datatoolscloud.net.au/KleberWebService/DtKleberService.svc/ProcessQueryStringRequest",
+                        dataType: "jsonp",
+
+                        crossDomain: true,
+                        data: { OutputFormat: "json", RecordId: ui.item.RecordId, Method: "DataTools.Capture.Address.Predictive.AuPaf.RetrieveAddress", RequestKey: TempKey },
+                        success: function (data) {
+                            $.map(data.DtResponse.Result, function (item) {
+                                parent.Xrm.Page.getAttribute("address1_line1").setValue(ui.item.AddressLine);
+                                parent.Xrm.Page.getAttribute("address1_city").setValue(item.Locality);
+                                parent.Xrm.Page.getAttribute("address1_stateorprovince").setValue(item.State);
+                                parent.Xrm.Page.getAttribute("address1_postalcode").setValue(item.Postcode);
+                                parent.Xrm.Page.getAttribute("address1_country").setValue("AUSTRALIA");
+                                parent.Xrm.Page.getAttribute("dyn365apps_dpid").setValue(item.DPID);
+                                parent.Xrm.Page.getAttribute("dyn365apps_addressvalidated").setValue("425320001"); // Valid Address
+
+                                var address = parent.Xrm.Page.getAttribute("address1_line1").getValue();
+                                address += ", " + parent.Xrm.Page.getAttribute("address1_city").getValue();
+                                address += ", " + parent.Xrm.Page.getAttribute("address1_stateorprovince").getValue();
+                                address += ", " + parent.Xrm.Page.getAttribute("address1_postalcode").getValue();
+                                address += ", " + parent.Xrm.Page.getAttribute("address1_country").getValue();
+                                $('#addline').val(address);
+                            });
+                        }
+                    });
+                },
+            });
+
+        });
+
+    </script>
+    <style>
+        #addline {
+            border: 0px solid;
+            background-color: #ffffff;
+            height: 24px;
+        }
+
+        #addline:focus {
+            outline: 1px solid #CCCCCC;
+            background-color: #ffffff;
+            padding-left: 5px;
+        }
+
+        #addline:hover {
+            outline: 1px solid #CCCCCC;
+            outline-offset: -2px;
+            background-color: #eeeeee;
+            padding-left: 5px;
+        }
+
+        #addline:active {
+            outline: 1px solid #CCCCCC;
+            background-color: #ffffff;
+            padding-left: 5px;
+        }
+    </style>
+    <meta>
+    <meta>
+    <meta>
+    <meta>
+
+</head>
+<body style="margin: 0px; word-wrap: break-word;">
+    <form style="margin-bottom: 0px;">
+        <table id="allfields" border="0" cellspacing="0" cellpadding="0" width="100%" style="margin-top: 2px">
+            <tbody>
+                <tr>
+                    <td style="font-family: Segoe\000020UI,Tahoma,Arial; font-size: 12px; width:150; max-width: 150px; text-align: left; color: #444444; padding: 0px;">Postal Address</td>
+                    <td style="font-family: Segoe\000020UI,Tahoma,Arial; font-size: 12px; width:auto; text-align: left; color: #444444; padding: 0px; padding-left: 26px;">
+                        <input style="font-family: Segoe\000020UI,Tahoma,Arial; font-size: 12px; font-weight: bold; color: #000000; width:100%; margin-left:1px; height: 24px;" class="textbox ui-autocomplete-input" size="50" name="Address line 1" id="addline" autocomplete="off" type="text" value="--">
+                        <span role="status" aria-live="polite" class="ui-helper-hidden-accessible">10 results are available, use up and down arrow keys to navigate.</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </form>
+</body>
+</html>

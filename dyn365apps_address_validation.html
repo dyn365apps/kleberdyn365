@@ -62,7 +62,6 @@
                         contentType: "application/json; charset=utf-8",
                         data: { OutputFormat: "json", ResultLimit: 4, AddressLine: request.term, Method: "DataTools.Capture.Address.Predictive.AuPaf.SearchAddress", RequestKey: TempKey },
                         success: function (data) {
-                            $('#dpid').val("");
                             response($.map(data.DtResponse.Result, function (item) {
 
                                 var Output = (item.AddressLine + ", " + item.Locality + ", " + item.State + ", " + item.Postcode);
